@@ -1,0 +1,6 @@
+{
+  "tests": [
+    {"name": "OPTIONS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200},
+    {"name": "Missing filename returns 400", "method": "GET", "path": "/", "expectedStatus": 400}
+  ]
+}

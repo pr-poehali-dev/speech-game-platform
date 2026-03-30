@@ -6,7 +6,6 @@ interface GameMeta {
   title: string;
   description: string;
   emoji: string;
-  url: string;
 }
 
 const ADMIN_PASSWORD = "logodeti2024";
@@ -244,7 +243,7 @@ export default function Games() {
               </button>
             </div>
             <iframe
-              src={activeGame.url}
+              src={`${func2url["get-game"]}?filename=${encodeURIComponent(activeGame.filename)}`}
               className="w-full flex-1"
               style={{ minHeight: "600px", border: "none" }}
               title={activeGame.title}

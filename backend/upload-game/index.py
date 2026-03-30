@@ -1,9 +1,9 @@
-"""Загрузка HTML-файла игры в S3-хранилище"""
+"""Загрузка HTML-файла игры в базу данных"""
 import json
 import os
 import base64
-import boto3
 import re
+import psycopg2
 
 
 def handler(event: dict, context) -> dict:
@@ -27,51 +27,26 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'filename и content обязательны'})}
 
     safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', filename.replace('.html', '')) + '.html'
-    html_bytes = base64.b64decode(content_b64)
-    print(f"[upload-game] filename={filename}, safe_name={safe_name}, content_len={len(html_bytes)}")
+    html_content = base64.b64decode(content_b64).decode('utf-8', errors='replace')
 
-    s3 = boto3.client(
-        's3',
-        endpoint_url='https://bucket.poehali.dev',
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    cur = conn.cursor()
+    cur.execute(
+        """INSERT INTO games (filename, title, description, emoji, content)
+           VALUES (%s, %s, %s, %s, %s)
+           ON CONFLICT (filename) DO UPDATE
+           SET title=EXCLUDED.title, description=EXCLUDED.description,
+               emoji=EXCLUDED.emoji, content=EXCLUDED.content""",
+        (safe_name, title or safe_name, description, emoji, html_content)
     )
+    conn.commit()
+    cur.close()
+    conn.close()
 
-    try:
-        r1 = s3.put_object(
-            Bucket='files',
-            Key=f'games/{safe_name}',
-            Body=html_bytes,
-            ContentType='text/html; charset=utf-8',
-        )
-        print(f"[upload-game] html put OK: {r1.get('ResponseMetadata', {}).get('HTTPStatusCode')}")
-    except Exception as e:
-        print(f"[upload-game] html put ERROR: {e}")
-        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': str(e)})}
-
-    meta = {
-        'filename': safe_name,
-        'title': title or safe_name,
-        'description': description,
-        'emoji': emoji,
-    }
-    try:
-        r2 = s3.put_object(
-            Bucket='files',
-            Key=f'games/{safe_name}.meta.json',
-            Body=json.dumps(meta, ensure_ascii=False).encode(),
-            ContentType='application/json',
-        )
-        print(f"[upload-game] meta put OK: {r2.get('ResponseMetadata', {}).get('HTTPStatusCode')}")
-    except Exception as e:
-        print(f"[upload-game] meta put ERROR: {e}")
-        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': str(e)})}
-
-    cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/games/{safe_name}"
-    print(f"[upload-game] done, cdn_url={cdn_url}")
+    print(f"[upload-game] saved to DB: {safe_name}")
 
     return {
         'statusCode': 200,
         'headers': cors,
-        'body': json.dumps({'url': cdn_url, 'filename': safe_name, 'meta': meta}, ensure_ascii=False),
+        'body': json.dumps({'filename': safe_name, 'title': title}, ensure_ascii=False),
     }
