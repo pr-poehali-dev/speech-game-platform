@@ -24,7 +24,10 @@ def handler(event: dict, context) -> dict:
     response = s3.list_objects_v2(Bucket='files', Prefix='games/')
     objects = response.get('Contents') or []
 
+    print(f"[list-games] total objects: {len(objects)}, keys: {[o['Key'] for o in objects]}")
+
     meta_keys = [o['Key'] for o in objects if o['Key'].endswith('.meta.json')]
+    print(f"[list-games] meta_keys: {meta_keys}")
 
     games = []
     key_id = os.environ['AWS_ACCESS_KEY_ID']
