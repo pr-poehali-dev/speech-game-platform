@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/45a7bdc2-bd26-485c-aba5-63edefe5f89d/files/fe0403e8-cddb-42a9-9296-38e3722a62d2.jpg";
 
 const GAMES = [
@@ -74,6 +76,7 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
+  const navigate = useNavigate();
   return (
     <>
       {/* HERO */}
@@ -107,7 +110,7 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
             </p>
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={() => scrollTo("games")}
+                onClick={() => navigate("/games")}
                 className="bg-gradient-to-r from-[#FF6B9D] to-[#9B5DE5] text-white font-black text-lg px-8 py-4 rounded-3xl shadow-2xl hover:scale-105 transition-all animate-pulse-ring"
               >
                 Начать играть бесплатно 🚀
@@ -199,6 +202,7 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
             {GAMES.map((game, i) => (
               <div
                 key={i}
+                onClick={() => navigate("/games")}
                 className="game-card rounded-3xl p-6 border-2 cursor-pointer"
                 style={{ background: game.bg, borderColor: game.color + "60" }}
               >
@@ -230,8 +234,11 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
           </div>
 
           <div className="text-center mt-12">
-            <button className="bg-gradient-to-r from-[#4D96FF] to-[#9B5DE5] text-white font-black text-lg px-10 py-4 rounded-3xl shadow-xl hover:scale-105 transition-all">
-              Смотреть все 500+ игр →
+            <button
+              onClick={() => navigate("/games")}
+              className="bg-gradient-to-r from-[#4D96FF] to-[#9B5DE5] text-white font-black text-lg px-10 py-4 rounded-3xl shadow-xl hover:scale-105 transition-all"
+            >
+              Смотреть все игры →
             </button>
           </div>
         </div>
