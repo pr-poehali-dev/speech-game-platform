@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "Wrong password",
+      "method": "POST",
+      "path": "/",
+      "body": {"password": "wrong", "filename": "test.html"},
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing filename",
+      "method": "POST",
+      "path": "/",
+      "body": {"password": "logodeti2024", "filename": ""},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
