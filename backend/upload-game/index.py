@@ -21,6 +21,7 @@ def handler(event: dict, context) -> dict:
     title = body.get('title', '').strip()
     description = body.get('description', '').strip()
     emoji = body.get('emoji', '🎮').strip()
+    category = body.get('category', '').strip()
     content_b64 = body.get('content', '')
 
     if not filename or not content_b64:
@@ -32,12 +33,12 @@ def handler(event: dict, context) -> dict:
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO games (filename, title, description, emoji, content)
-           VALUES (%s, %s, %s, %s, %s)
+        """INSERT INTO games (filename, title, description, emoji, category, content)
+           VALUES (%s, %s, %s, %s, %s, %s)
            ON CONFLICT (filename) DO UPDATE
            SET title=EXCLUDED.title, description=EXCLUDED.description,
-               emoji=EXCLUDED.emoji, content=EXCLUDED.content""",
-        (safe_name, title or safe_name, description, emoji, html_content)
+               emoji=EXCLUDED.emoji, category=EXCLUDED.category, content=EXCLUDED.content""",
+        (safe_name, title or safe_name, description, emoji, category, html_content)
     )
     conn.commit()
     cur.close()

@@ -16,13 +16,13 @@ def handler(event: dict, context) -> dict:
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
-    cur.execute("SELECT filename, title, description, emoji FROM games ORDER BY created_at DESC")
+    cur.execute("SELECT filename, title, description, emoji, category FROM games ORDER BY created_at DESC")
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
     games = [
-        {'filename': r[0], 'title': r[1], 'description': r[2], 'emoji': r[3]}
+        {'filename': r[0], 'title': r[1], 'description': r[2], 'emoji': r[3], 'category': r[4]}
         for r in rows
     ]
 
