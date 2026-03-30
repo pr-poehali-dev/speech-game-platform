@@ -21,6 +21,10 @@ def handler(event: dict, context) -> dict:
         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
     )
 
+    response_all = s3.list_objects_v2(Bucket='files')
+    all_objects = response_all.get('Contents') or []
+    print(f"[list-games] ALL objects in bucket: {[o['Key'] for o in all_objects]}")
+
     response = s3.list_objects_v2(Bucket='files', Prefix='games/')
     objects = response.get('Contents') or []
 
