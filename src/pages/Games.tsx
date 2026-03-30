@@ -225,30 +225,25 @@ export default function Games() {
 
       {/* Модалка с игрой */}
       {activeGame && (
-        <div
-          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && setActiveGame(null)}
-        >
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col" style={{ maxHeight: "95vh" }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{activeGame.emoji}</span>
-                <h2 className="font-black text-gray-800 text-xl">{activeGame.title}</h2>
-              </div>
-              <button
-                onClick={() => setActiveGame(null)}
-                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 font-black text-lg transition-all"
-              >
-                ✕
-              </button>
+        <div className="fixed inset-0 z-50 flex flex-col bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{activeGame.emoji}</span>
+              <h2 className="font-black text-gray-800 text-lg">{activeGame.title}</h2>
             </div>
-            <iframe
-              src={`${func2url["get-game"]}?filename=${encodeURIComponent(activeGame.filename)}`}
-              className="w-full flex-1"
-              style={{ minHeight: "600px", border: "none" }}
-              title={activeGame.title}
-            />
+            <button
+              onClick={() => setActiveGame(null)}
+              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 font-black text-lg transition-all"
+            >
+              ✕
+            </button>
           </div>
+          <iframe
+            src={`${func2url["get-game"]}?filename=${encodeURIComponent(activeGame.filename)}`}
+            className="w-full flex-1"
+            style={{ border: "none", height: "100%" }}
+            title={activeGame.title}
+          />
         </div>
       )}
     </div>
