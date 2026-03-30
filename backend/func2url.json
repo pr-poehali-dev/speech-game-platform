@@ -1,4 +1,5 @@
 {
+  "update-game": "https://functions.poehali.dev/54791112-5096-472f-b6c6-e611056afe69",
   "delete-game": "https://functions.poehali.dev/02eccf8a-96da-4eec-9675-602642894008",
   "get-game": "https://functions.poehali.dev/128a77e5-0cf7-42d2-8a1f-50d3e0eb2ebc",
   "upload-game": "https://functions.poehali.dev/237da548-3ec9-4535-bfdd-7f79a1d5b408",

@@ -64,6 +64,11 @@ export default function Games() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const [editingGame, setEditingGame] = useState<GameMeta | null>(null);
+  const [editCategory, setEditCategory] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editEmoji, setEditEmoji] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchGames = async () => {
     setLoading(true);
@@ -124,6 +129,32 @@ export default function Games() {
       }
     };
     reader.readAsArrayBuffer(uploadFile);
+  };
+
+  const openEdit = (game: GameMeta) => {
+    setEditingGame(game);
+    setEditCategory(game.category);
+    setEditTitle(game.title);
+    setEditEmoji(game.emoji);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingGame) return;
+    setSaving(true);
+    await fetch(func2url["update-game"], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        password: ADMIN_PASSWORD,
+        filename: editingGame.filename,
+        category: editCategory,
+        title: editTitle,
+        emoji: editEmoji,
+      }),
+    });
+    setSaving(false);
+    setEditingGame(null);
+    fetchGames();
   };
 
   const handleDelete = async (filename: string) => {
@@ -278,14 +309,23 @@ export default function Games() {
                           </div>
                         </button>
                         {adminAuth && (
-                          <button
-                            onClick={() => handleDelete(game.filename)}
-                            disabled={deletingFile === game.filename}
-                            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-100 hover:bg-red-500 hover:text-white text-red-400 font-black text-sm transition-all flex items-center justify-center shadow-sm"
-                            title="Удалить игру"
-                          >
-                            {deletingFile === game.filename ? "…" : "✕"}
-                          </button>
+                          <div className="absolute top-3 right-3 flex gap-1">
+                            <button
+                              onClick={() => openEdit(game)}
+                              className="w-8 h-8 rounded-full bg-blue-100 hover:bg-blue-500 hover:text-white text-blue-400 font-black text-sm transition-all flex items-center justify-center shadow-sm"
+                              title="Редактировать"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDelete(game.filename)}
+                              disabled={deletingFile === game.filename}
+                              className="w-8 h-8 rounded-full bg-red-100 hover:bg-red-500 hover:text-white text-red-400 font-black text-sm transition-all flex items-center justify-center shadow-sm"
+                              title="Удалить игру"
+                            >
+                              {deletingFile === game.filename ? "…" : "✕"}
+                            </button>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -411,6 +451,84 @@ export default function Games() {
           </div>
         )}
       </div>
+
+      {/* Панель всех игр для админа */}
+      {adminAuth && games.length > 0 && (
+        <div className="mt-6 bg-white rounded-3xl border-2 border-blue-100 shadow-lg p-8 max-w-2xl mx-auto">
+          <h3 className="font-black text-gray-800 text-lg mb-4">📋 Все игры — смена раздела</h3>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {games.map(game => (
+              <div key={game.filename} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50">
+                <span className="text-xl shrink-0">{game.emoji}</span>
+                <span className="font-semibold text-gray-700 flex-1 text-sm truncate">{game.title}</span>
+                <span className="text-xs text-gray-400 shrink-0 hidden sm:block">
+                  {CATEGORIES.find(c => c.id === game.category)?.label || "—"}
+                </span>
+                <button
+                  onClick={() => openEdit(game)}
+                  className="shrink-0 text-xs bg-blue-100 hover:bg-blue-500 hover:text-white text-blue-600 font-bold px-3 py-1.5 rounded-xl transition-colors"
+                >
+                  Изменить
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно редактирования */}
+      {editingGame && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+            <h3 className="font-black text-gray-800 text-xl mb-5">✏️ Редактировать игру</h3>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editEmoji}
+                  onChange={(e) => setEditEmoji(e.target.value)}
+                  className="w-20 border-2 border-purple-100 rounded-2xl px-3 py-3 font-semibold text-center text-xl focus:outline-none focus:border-purple-300"
+                />
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="flex-1 border-2 border-purple-100 rounded-2xl px-4 py-3 font-semibold focus:outline-none focus:border-purple-300"
+                  placeholder="Название"
+                />
+              </div>
+              <select
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value)}
+                className="w-full border-2 border-purple-100 rounded-2xl px-4 py-3 font-semibold focus:outline-none focus:border-purple-300 bg-white text-gray-700"
+              >
+                <option value="">— Выберите раздел —</option>
+                <optgroup label="Автоматизация">
+                  {AUTO_CATS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </optgroup>
+                <optgroup label="Дифференциация">
+                  {DIFF_CATS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </optgroup>
+              </select>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setEditingGame(null)}
+                  className="flex-1 border-2 border-gray-200 text-gray-500 font-bold py-3 rounded-2xl hover:bg-gray-50 transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={saving || !editCategory}
+                  className="flex-1 bg-[#9B5DE5] text-white font-black py-3 rounded-2xl hover:bg-purple-700 transition-colors disabled:opacity-40"
+                >
+                  {saving ? "Сохраняем..." : "Сохранить"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Полноэкранный плеер */}
       {activeGame && (
