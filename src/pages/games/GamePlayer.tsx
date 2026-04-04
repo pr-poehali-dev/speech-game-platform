@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import func2url from "../../../backend/func2url.json";
 import { GameMeta } from "./games.types";
 
@@ -7,8 +8,8 @@ interface Props {
 }
 
 export default function GamePlayer({ game, onClose }: Props) {
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-white">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{game.emoji}</span>
@@ -27,6 +28,7 @@ export default function GamePlayer({ game, onClose }: Props) {
         style={{ border: "none", height: "100%" }}
         title={game.title}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
