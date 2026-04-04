@@ -1,9 +1,9 @@
 """
-Auth: регистрация, вход, получение профиля, выход.
-POST /register — создать аккаунт
-POST /login    — войти, получить токен
-GET  /me       — профиль + подписка (по токену)
-POST /logout   — выйти
+Auth: регистрация, вход, профиль, выход.
+POST / с action=register — создать аккаунт
+POST / с action=login    — войти
+POST / с action=me       — профиль (по токену)
+POST / с action=logout   — выйти
 """
 import json, os, hashlib, secrets
 from datetime import datetime, timedelta
@@ -24,39 +24,25 @@ def hash_password(password: str) -> str:
 def make_token() -> str:
     return secrets.token_hex(32)
 
-def get_user_by_token(conn, token: str):
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT u.id, u.email, u.name, u.role, u.created_at,
-                   s.plan, s.expires_at, s.is_active
-            FROM auth_sessions AS a
-            JOIN users AS u ON u.id = a.user_id
-            LEFT JOIN subscriptions AS s ON s.user_id = u.id AND s.is_active = TRUE
-            WHERE a.token = %s AND a.expires_at > NOW()
-            ORDER BY s.expires_at DESC NULLS LAST
-            LIMIT 1
-        """, (token,))
-        return cur.fetchone()
-
 def handler(event: dict, context) -> dict:
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
-    method = event.get("httpMethod", "GET")
-    path = event.get("path", "/")
     token = event.get("headers", {}).get("X-Auth-Token", "")
+    body = json.loads(event.get("body") or "{}")
+    action = body.get("action", "")
 
     conn = get_conn()
 
     try:
-        # POST /register
-        if method == "POST" and path.endswith("/register"):
-            body = json.loads(event.get("body") or "{}")
+        # REGISTER
+        if action == "register":
             email = (body.get("email") or "").strip().lower()
             password = body.get("password") or ""
             name = (body.get("name") or "").strip()
 
             if not email or not password or len(password) < 6:
+                conn.close()
                 return {"statusCode": 400, "headers": CORS,
                         "body": json.dumps({"error": "Укажите email и пароль (минимум 6 символов)"})}
 
@@ -73,7 +59,6 @@ def handler(event: dict, context) -> dict:
                 )
                 user_id = cur.fetchone()[0]
 
-                # Бесплатная подписка на 14 дней
                 cur.execute(
                     "INSERT INTO subscriptions (user_id, plan, expires_at) VALUES (%s, 'trial', %s)",
                     (user_id, datetime.now() + timedelta(days=14))
@@ -89,9 +74,8 @@ def handler(event: dict, context) -> dict:
             return {"statusCode": 200, "headers": CORS,
                     "body": json.dumps({"token": new_token, "user_id": user_id})}
 
-        # POST /login
-        if method == "POST" and path.endswith("/login"):
-            body = json.loads(event.get("body") or "{}")
+        # LOGIN
+        if action == "login":
             email = (body.get("email") or "").strip().lower()
             password = body.get("password") or ""
 
@@ -117,14 +101,26 @@ def handler(event: dict, context) -> dict:
             return {"statusCode": 200, "headers": CORS,
                     "body": json.dumps({"token": new_token, "user_id": user_id})}
 
-        # GET /me
-        if method == "GET" and path.endswith("/me"):
+        # ME
+        if action == "me":
             if not token:
                 conn.close()
                 return {"statusCode": 401, "headers": CORS,
                         "body": json.dumps({"error": "Требуется авторизация"})}
 
-            row = get_user_by_token(conn, token)
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT u.id, u.email, u.name, u.role, u.created_at,
+                           s.plan, s.expires_at, s.is_active
+                    FROM auth_sessions AS a
+                    JOIN users AS u ON u.id = a.user_id
+                    LEFT JOIN subscriptions AS s ON s.user_id = u.id AND s.is_active = TRUE
+                    WHERE a.token = %s AND a.expires_at > NOW()
+                    ORDER BY s.expires_at DESC NULLS LAST
+                    LIMIT 1
+                """, (token,))
+                row = cur.fetchone()
+
             conn.close()
             if not row:
                 return {"statusCode": 401, "headers": CORS,
@@ -148,8 +144,8 @@ def handler(event: dict, context) -> dict:
                 "created_at": created_at.isoformat(),
             })}
 
-        # POST /logout
-        if method == "POST" and path.endswith("/logout"):
+        # LOGOUT
+        if action == "logout":
             if token:
                 with conn.cursor() as cur:
                     cur.execute("UPDATE auth_sessions SET expires_at = NOW() WHERE token = %s", (token,))
@@ -158,7 +154,7 @@ def handler(event: dict, context) -> dict:
             return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
 
         conn.close()
-        return {"statusCode": 404, "headers": CORS, "body": json.dumps({"error": "Not found"})}
+        return {"statusCode": 404, "headers": CORS, "body": json.dumps({"error": "Unknown action"})}
 
     except Exception as e:
         conn.close()

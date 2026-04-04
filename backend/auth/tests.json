@@ -1,10 +1,19 @@
 {
   "tests": [
     {
-      "name": "Auth root - not found",
-      "method": "GET",
+      "name": "Register user",
+      "method": "POST",
       "path": "/",
-      "expectedStatus": 404,
+      "body": {"action": "register", "email": "demo_test99@test.com", "password": "demo1234", "name": "Демо"},
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login wrong password",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "login", "email": "demo_test99@test.com", "password": "wrong"},
+      "expectedStatus": 401,
       "bodyMatcher": "partial"
     }
   ]

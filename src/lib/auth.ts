@@ -20,42 +20,37 @@ export interface User {
 
 const authUrl = func2url["auth"];
 
-export async function register(email: string, password: string, name: string): Promise<{ token: string }> {
-  const res = await fetch(`${authUrl}/register`, {
+async function authRequest(action: string, body: object = {}, token?: string): Promise<Response> {
+  return fetch(authUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, name }),
+    headers: { "Content-Type": "application/json", ...(token ? { "X-Auth-Token": token } : {}) },
+    body: JSON.stringify({ action, ...body }),
   });
+}
+
+export async function register(email: string, password: string, name: string): Promise<{ token: string }> {
+  const res = await authRequest("register", { email, password, name });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Ошибка регистрации");
   return data;
 }
 
 export async function login(email: string, password: string): Promise<{ token: string }> {
-  const res = await fetch(`${authUrl}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  const res = await authRequest("login", { email, password });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Неверный email или пароль");
   return data;
 }
 
 export async function getMe(token: string): Promise<User> {
-  const res = await fetch(`${authUrl}/me`, {
-    headers: { "X-Auth-Token": token },
-  });
+  const res = await authRequest("me", {}, token);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Сессия истекла");
   return data;
 }
 
 export async function logout(token: string): Promise<void> {
-  await fetch(`${authUrl}/logout`, {
-    method: "POST",
-    headers: { "X-Auth-Token": token },
-  });
+  await authRequest("logout", {}, token);
 }
 
 export async function trackGame(game: { filename: string; title: string; emoji: string; category: string }): Promise<number | null> {
