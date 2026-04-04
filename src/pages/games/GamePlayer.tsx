@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import func2url from "../../../backend/func2url.json";
 import { GameMeta } from "./games.types";
+import { trackGame, finishGameSession } from "@/lib/auth";
 
 interface Props {
   game: GameMeta;
@@ -8,6 +10,26 @@ interface Props {
 }
 
 export default function GamePlayer({ game, onClose }: Props) {
+  const sessionIdRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+    trackGame({
+      filename: game.filename,
+      title: game.title,
+      emoji: game.emoji,
+      category: game.category,
+    }).then(id => { sessionIdRef.current = id; });
+
+    return () => {
+      const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+      if (sessionIdRef.current) {
+        finishGameSession(sessionIdRef.current, duration);
+      }
+    };
+  }, [game]);
+
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex flex-col bg-white">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0">

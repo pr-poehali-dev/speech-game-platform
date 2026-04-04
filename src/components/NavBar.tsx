@@ -51,6 +51,12 @@ export default function NavBar({ activeSection, menuOpen, setMenuOpen, scrollTo 
 
         <div className="hidden lg:flex items-center gap-3">
           <button
+            onClick={() => navigate("/progress")}
+            className="border-2 border-[#9B5DE5] text-[#9B5DE5] font-bold px-4 py-2.5 rounded-2xl hover:bg-purple-50 transition-all text-sm"
+          >
+            📊 Прогресс
+          </button>
+          <button
             onClick={() => navigate("/games")}
             className="bg-gradient-to-r from-[#FF6B9D] to-[#9B5DE5] text-white font-bold px-5 py-2.5 rounded-2xl shadow-lg hover:scale-105 transition-transform text-sm"
           >

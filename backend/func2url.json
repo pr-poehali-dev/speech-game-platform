@@ -1,4 +1,7 @@
 {
+  "progress": "https://functions.poehali.dev/f9330c94-4186-4b0a-8d29-1ee3b00f67f3",
+  "auth": "https://functions.poehali.dev/7c6e4839-1dcd-4930-a9b9-5b0355d47a6b",
+  "track-game": "https://functions.poehali.dev/60cedfa5-fe9c-4ef7-9526-56601d6e69a0",
   "update-game": "https://functions.poehali.dev/54791112-5096-472f-b6c6-e611056afe69",
   "delete-game": "https://functions.poehali.dev/02eccf8a-96da-4eec-9675-602642894008",
   "get-game": "https://functions.poehali.dev/128a77e5-0cf7-42d2-8a1f-50d3e0eb2ebc",

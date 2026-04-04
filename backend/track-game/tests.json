@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Track game start (anonymous)",
+      "method": "POST",
+      "path": "/",
+      "body": {"filename": "test.html", "title": "Тест", "emoji": "🎮", "category": "auto-r"},
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPortal } from "react-dom";
 import func2url from "../../backend/func2url.json";
 import { GameMeta } from "@/pages/games/games.types";
+import GamePlayer from "@/pages/games/GamePlayer";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/45a7bdc2-bd26-485c-aba5-63edefe5f89d/files/fe0403e8-cddb-42a9-9296-38e3722a62d2.jpg";
 
@@ -203,30 +203,7 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
         </div>
       </section>
 
-      {/* Inline game player portal */}
-      {activeGame && createPortal(
-        <div className="fixed inset-0 z-[9999] flex flex-col bg-white">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{activeGame.emoji}</span>
-              <h2 className="font-black text-gray-800 text-lg">{activeGame.title}</h2>
-            </div>
-            <button
-              onClick={() => setActiveGame(null)}
-              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 font-black text-lg transition-all"
-            >
-              ✕
-            </button>
-          </div>
-          <iframe
-            src={`${func2url["get-game"]}?filename=${encodeURIComponent(activeGame.filename)}`}
-            className="w-full flex-1"
-            style={{ border: "none", height: "100%" }}
-            title={activeGame.title}
-          />
-        </div>,
-        document.body
-      )}
+      {activeGame && <GamePlayer game={activeGame} onClose={() => setActiveGame(null)} />}
     </>
   );
 }
