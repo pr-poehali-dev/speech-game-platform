@@ -1,62 +1,18 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import func2url from "../../backend/func2url.json";
+import { GameMeta } from "@/pages/games/games.types";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/45a7bdc2-bd26-485c-aba5-63edefe5f89d/files/fe0403e8-cddb-42a9-9296-38e3722a62d2.jpg";
 
-const GAMES = [
-  {
-    emoji: "🦁",
-    title: "Рык льва",
-    desc: "Тренируем букву Р через весёлые звуки животных",
-    age: "4–6 лет",
-    color: "#FFD93D",
-    bg: "#FFF9E3",
-    tags: ["Звукопроизношение", "Р"],
-  },
-  {
-    emoji: "🐍",
-    title: "Змейка шипит",
-    desc: "Упражнения на шипящие звуки Ш, Ж, Щ в игровой форме",
-    age: "4–7 лет",
-    color: "#6BCB77",
-    bg: "#EDFFF0",
-    tags: ["Дикция", "Ш-Ж-Щ"],
-  },
-  {
-    emoji: "🎵",
-    title: "Песенка язычка",
-    desc: "Артикуляционная гимнастика под весёлую музыку",
-    age: "3–5 лет",
-    color: "#4D96FF",
-    bg: "#EEF5FF",
-    tags: ["Артикуляция", "Для малышей"],
-  },
-  {
-    emoji: "🎯",
-    title: "Попади в цель",
-    desc: "Угадывай слова и тренируй чёткость произношения",
-    age: "5–8 лет",
-    color: "#FF6B9D",
-    bg: "#FFF0F5",
-    tags: ["Дикция", "Словарь"],
-  },
-  {
-    emoji: "🐸",
-    title: "Прыгающая лягушка",
-    desc: "Чистоговорки и скороговорки для быстрой речи",
-    age: "6–9 лет",
-    color: "#9B5DE5",
-    bg: "#F5EEFF",
-    tags: ["Скороговорки", "Темп"],
-  },
-  {
-    emoji: "🌈",
-    title: "Радуга звуков",
-    desc: "Различай и воспроизводи похожие звуки-двойники",
-    age: "5–8 лет",
-    color: "#FF9F1C",
-    bg: "#FFF5E8",
-    tags: ["Фонематика", "Различение"],
-  },
+const CARD_COLORS = [
+  { color: "#9B5DE5", bg: "#F5EEFF" },
+  { color: "#FF6B9D", bg: "#FFF0F5" },
+  { color: "#4D96FF", bg: "#EEF5FF" },
+  { color: "#FFD93D", bg: "#FFF9E3" },
+  { color: "#6BCB77", bg: "#EDFFF0" },
+  { color: "#FF9F1C", bg: "#FFF5E8" },
 ];
 
 const STATS = [
@@ -77,6 +33,16 @@ interface HeroSectionProps {
 
 export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
   const navigate = useNavigate();
+  const [featuredGames, setFeaturedGames] = useState<GameMeta[]>([]);
+  const [activeGame, setActiveGame] = useState<GameMeta | null>(null);
+
+  useEffect(() => {
+    fetch(func2url["list-games"])
+      .then(r => r.json())
+      .then(d => setFeaturedGames((d.games || []).slice(0, 6)))
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       {/* HERO */}
@@ -191,7 +157,7 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
               🎮 Наши игры
             </div>
             <h2 className="text-4xl lg:text-5xl font-black text-[#9B5DE5] mb-4">
-              Выбери своё упражнение
+              Попробуй прямо сейчас
             </h2>
             <p className="text-xl text-gray-500 font-semibold max-w-2xl mx-auto">
               Каждая игра разработана логопедами и проверена на тысячах детей
@@ -199,38 +165,31 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {GAMES.map((game, i) => (
-              <div
-                key={i}
-                onClick={() => navigate("/games")}
-                className="game-card rounded-3xl p-6 border-2 cursor-pointer"
-                style={{ background: game.bg, borderColor: game.color + "60" }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="text-5xl animate-bounce-slow" style={{ animationDelay: `${i * 0.15}s` }}>
+            {featuredGames.map((game, i) => {
+              const palette = CARD_COLORS[i % CARD_COLORS.length];
+              return (
+                <div
+                  key={game.filename}
+                  onClick={() => setActiveGame(game)}
+                  className="game-card rounded-3xl p-6 border-2 cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all"
+                  style={{ background: palette.bg, borderColor: palette.color + "60" }}
+                >
+                  <div className="text-5xl mb-4 animate-bounce-slow" style={{ animationDelay: `${i * 0.15}s` }}>
                     {game.emoji}
                   </div>
-                  <span className="bg-white/80 text-gray-600 text-xs font-bold px-3 py-1 rounded-full border" style={{ borderColor: game.color + "40" }}>
-                    {game.age}
-                  </span>
+                  <h3 className="text-xl font-black text-gray-800 mb-2 leading-tight">{game.title}</h3>
+                  {game.description && (
+                    <p className="text-gray-500 font-semibold text-sm leading-relaxed mb-4 line-clamp-2">{game.description}</p>
+                  )}
+                  <button
+                    className="w-full py-3 rounded-2xl font-black text-white transition-all hover:scale-105 hover:shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${palette.color}, ${palette.color}cc)` }}
+                  >
+                    ▶ Играть
+                  </button>
                 </div>
-                <h3 className="text-xl font-black text-gray-800 mb-2">{game.title}</h3>
-                <p className="text-gray-600 font-semibold text-sm leading-relaxed mb-4">{game.desc}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {game.tags.map((tag) => (
-                    <span key={tag} className="text-xs font-bold px-2 py-1 rounded-lg text-white" style={{ background: game.color }}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <button
-                  className="w-full py-3 rounded-2xl font-black text-white transition-all hover:scale-105 hover:shadow-lg"
-                  style={{ background: `linear-gradient(135deg, ${game.color}, ${game.color}cc)` }}
-                >
-                  Играть →
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="text-center mt-12">
@@ -243,6 +202,31 @@ export default function HeroSection({ visible, scrollTo }: HeroSectionProps) {
           </div>
         </div>
       </section>
+
+      {/* Inline game player portal */}
+      {activeGame && createPortal(
+        <div className="fixed inset-0 z-[9999] flex flex-col bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{activeGame.emoji}</span>
+              <h2 className="font-black text-gray-800 text-lg">{activeGame.title}</h2>
+            </div>
+            <button
+              onClick={() => setActiveGame(null)}
+              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 font-black text-lg transition-all"
+            >
+              ✕
+            </button>
+          </div>
+          <iframe
+            src={`${func2url["get-game"]}?filename=${encodeURIComponent(activeGame.filename)}`}
+            className="w-full flex-1"
+            style={{ border: "none", height: "100%" }}
+            title={activeGame.title}
+          />
+        </div>,
+        document.body
+      )}
     </>
   );
 }

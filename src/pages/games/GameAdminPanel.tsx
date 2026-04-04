@@ -121,20 +121,21 @@ export default function GameAdminPanel({ games, adminAuth, onAuthChange, onRefre
 
   return (
     <>
-      <div className="text-center mt-10">
+      <div className="fixed bottom-4 right-4 z-40">
         {!adminAuth ? (
           <button
             onClick={() => setAdminOpen(!adminOpen)}
-            className="text-gray-300 text-xs hover:text-purple-400 transition-colors"
+            className="text-gray-200 text-base hover:text-purple-400 transition-colors opacity-30 hover:opacity-100 select-none"
+            title=""
           >
             🔑
           </button>
         ) : (
           <button
             onClick={() => { onAuthChange(false); setAdminOpen(false); setUploadSuccess(false); }}
-            className="text-gray-400 text-xs font-semibold hover:text-red-400 transition-colors"
+            className="text-gray-400 text-xs font-semibold hover:text-red-400 transition-colors bg-white/80 px-3 py-1.5 rounded-full shadow border border-gray-100"
           >
-            Выйти из режима администратора
+            Выйти
           </button>
         )}
       </div>
